@@ -1,15 +1,23 @@
-import { ConvexError, v } from "convex/values";
-import { query } from "./_generated/server";
-import { mutation } from "./_generated/server";
-import { paginationOptsValidator } from "convex/server";
+import { v } from "convex/values";
+import { query, mutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
-// non-paginated query for transactions form
 export const get = query({
   handler: async (ctx) => {
-
-    return await ctx.db
-      .query("teams")
-      .collect(); // Fetch all documents
+    const teams = await ctx.db.query("teams").collect();
+    return Promise.all(teams.map(async (team) => {
+      const players = await ctx.db
+        .query("players")
+        .withIndex("by_team", (q) => q.eq("teamId", team._id))
+        .collect();
+      return { ...team, playerCount: players.length };
+    }));
   },
 });
 
+export const create = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, { name }) => {
+    return await ctx.db.insert("teams", { name });
+  },
+});
