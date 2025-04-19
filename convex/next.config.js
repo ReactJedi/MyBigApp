@@ -1,7 +1,7 @@
 module.exports = {
   images: {
     domains: [
-      'your-convex-deployment.convex.cloud' // Replace with your Convex deployment URL
+      'acrobatic-owl-222.convex.cloud' // Your actual Convex deployment URL
     ],
   },
 };

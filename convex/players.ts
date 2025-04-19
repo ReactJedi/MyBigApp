@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
+// convex/players.ts
 export const get = query({
   args: { teamId: v.optional(v.id("teams")) },
   handler: async (ctx, { teamId }) => {
@@ -10,10 +11,17 @@ export const get = query({
       : ctx.db.query("players");
       
     const players = await query.collect();
-    return Promise.all(players.map(async (player) => ({
-      ...player,
-      photoUrl: player.photo ? await ctx.storage.getUrl(player.photo) : null
-    })));
+    return Promise.all(players.map(async (player) => {
+      let photoUrl = null;
+      if (player.photo) {
+        try {
+          photoUrl = await ctx.storage.getUrl(player.photo);
+        } catch (error) {
+          console.error("Failed to get photo URL:", error);
+        }
+      }
+      return { ...player, photoUrl };
+    }));
   },
 });
 

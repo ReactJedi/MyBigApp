@@ -5,12 +5,11 @@ import { Id } from "./_generated/dataModel";
 export const get = query({
   handler: async (ctx) => {
     const teams = await ctx.db.query("teams").collect();
-    return Promise.all(teams.map(async (team) => {
-      const players = await ctx.db
-        .query("players")
-        .withIndex("by_team", (q) => q.eq("teamId", team._id))
-        .collect();
-      return { ...team, playerCount: players.length };
+    const players = await ctx.db.query("players").collect(); // Single query for all players
+
+    return teams.map(team => ({
+      ...team,
+      playerCount: players.filter(p => p.teamId === team._id).length
     }));
   },
 });
