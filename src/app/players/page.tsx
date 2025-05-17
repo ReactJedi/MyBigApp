@@ -4,6 +4,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 
 export default function PlayersPage() {
   const players = useQuery(api.players.get);
