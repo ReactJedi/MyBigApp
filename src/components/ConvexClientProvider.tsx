@@ -6,13 +6,39 @@ import {
   Unauthenticated,
   AuthLoading,
 } from "convex/react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ClerkProvider, useAuth, SignIn } from "@clerk/clerk-react";
+import { FullscreenLoader } from "./fullscreen-loader";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onError = (event: ErrorEvent) => {
+      setError(event.error?.message || "Unknown error");
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
+      setError(event.reason?.message || "Unhandled promise rejection");
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-red-100 text-red-700 font-semibold whitespace-pre-wrap text-lg">
+        Error: {error}
+      </div>
+    );
+  }
+
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
@@ -26,10 +52,10 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
             <SignIn />
           </div>
         </Unauthenticated>
-        {/* <AuthLoading> */}
-          {/* <p>Loading auth...</p> */}
-          {/* <FullscreenLoader label="Auth loading..." /> */}
-        {/* </AuthLoading> */}
+        <AuthLoading>
+          <p>Loading auth...</p>
+          <FullscreenLoader label="Auth loading..." />
+        </AuthLoading>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
