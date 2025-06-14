@@ -1,15 +1,23 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { ClerkProvider, useAuth } from "@clerk/clerk-react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
 
 export default function PlayersPage() {
-  const players = useQuery(api.players.get);
+  const players = useQuery(api.players.get, {});
   const teams = useQuery(api.teams.get);
+  const teamGroups = teams
+  ? teams.reduce((acc, team) => {
+      if (!acc[team.name]) {
+        acc[team.name] = { count: 0 };
+      }
+      acc[team.name].count += 1;
+      return acc;
+    }, {} as Record<string, { count: number }>)
+  : {};
   const addPlayer = useMutation(api.players.create);
   const addTeam = useMutation(api.teams.create);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -77,8 +85,9 @@ export default function PlayersPage() {
       await addPlayer({ 
         name: playerName,
         birthday,
-        teamId,
-        photo: photoId 
+        teamId: teamId as Id<"teams">, // <-- Cast here
+        photo: photoId,
+        userId: "currentUserId", // Replace with actual user ID logic
       });
       
       // Reset form
@@ -98,52 +107,22 @@ export default function PlayersPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Players Management</h1>
 
-        {/* Team Management Section */}
-        <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Teams</h2>
-            <button
-              onClick={() => setShowTeamForm(!showTeamForm)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              {showTeamForm ? "Cancel" : "Add Team"}
-            </button>
+          <div>
+            <h2>Teams</h2>
+            <div className="space-y-2">
+              {Object.entries(teamGroups).map(([name, { count }]) => (
+                <div
+                  key={name}
+                  className="bg-blue-50 p-3 rounded-lg flex justify-between items-center border border-blue-100"
+                >
+                  <span className="font-medium">{name}</span>
+                  <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
+                    {count} {count === 1 ? "player" : "players"}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-
-          {showTeamForm && (
-            <form onSubmit={handleAddTeam} className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                placeholder="New team name"
-                className="border p-2 rounded-lg flex-1 focus:ring-2 focus:ring-blue-400 outline-none"
-                required
-                minLength={2}
-              />
-              <button
-                type="submit"
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Create Team
-              </button>
-            </form>
-          )}
-
-          <div className="space-y-2">
-            {teams?.map((team) => (
-              <div
-                key={team._id}
-                className="bg-blue-50 p-3 rounded-lg flex justify-between items-center border border-blue-100"
-              >
-                <span className="font-medium">{team.name}</span>
-                <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
-                  {team.playerCount} players
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Players List */}
         <div className="bg-white shadow-md rounded-lg p-6 mb-6">

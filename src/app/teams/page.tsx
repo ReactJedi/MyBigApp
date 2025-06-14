@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Id } from "convex/values";
+import type { Id } from "../../../convex/_generated/dataModel";
+// import { Id } from "convex/index";
+
 
 const formSchema = z.object({
   teamname: z.string().min(2, "Team name must be at least 2 characters"),
