@@ -30,7 +30,8 @@ export const create = mutation({
     name: v.string(),
     birthday: v.string(),
     teamId: v.id("teams"),
-    photo: v.optional(v.id("_storage"))
+    photo: v.optional(v.id("_storage")),
+    userId: v.string(), // <-- Add this line!
   },
   handler: async (ctx, args) => {
     const team = await ctx.db.get(args.teamId);
